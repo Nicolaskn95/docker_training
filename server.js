@@ -8,11 +8,9 @@ const cors = require('cors');
 const app = express();
 const port = 3000;
 
-// Configurações do Express
 app.use(cors());
 app.use(express.json());
 
-// Variável global para a conexão com o banco
 let db;
 
 const initializeDatabase = async () => {
@@ -37,7 +35,6 @@ const initializeDatabase = async () => {
     await adminClient.end();
   }
 
-  // Cria a conexão principal
   db = new Pool({
     host: process.env.POSTGRES_HOST,
     user: process.env.POSTGRES_USER,
@@ -46,7 +43,6 @@ const initializeDatabase = async () => {
     port: process.env.POSTGRES_PORT
   });
 
-  // Cria a tabela
   await db.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -56,7 +52,6 @@ const initializeDatabase = async () => {
   console.log('Tabela users verificada/criada!');
 };
 
-// Configuração do Swagger
 const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
@@ -185,7 +180,6 @@ app.delete('/users/:id', (req, res) => {
   );
 });
 
-// Inicialização do servidor
 const startServer = async () => {
   try {
     await initializeDatabase();
