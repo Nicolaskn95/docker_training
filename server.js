@@ -1,39 +1,69 @@
 require('dotenv').config();
 const express = require('express');
-const mysql = require('mysql2');
+const { Pool } = require("pg");
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
-const port = 3000;
+const cors = require('cors');
 
 const app = express();
+const port = 3000;
+
+// Configurações do Express
+app.use(cors());
 app.use(express.json());
 
-const db = mysql.createConnection({
-  host: process.env.MYSQL_HOST,
-  user: process.env.MYSQL_USER,
-  password: process.env.MYSQL_PASSWORD,
-  database: process.env.MYSQL_DATABASE,
-  port: process.env.MYSQL_PORT
-});
+// Variável global para a conexão com o banco
+let db;
 
-db.connect(err => {
-  if (err) throw err;
-  console.log('Conectado ao MySQL!');
-  db.query(`
+const initializeDatabase = async () => {
+  const adminClient = new Pool({
+    host: process.env.POSTGRES_HOST,
+    user: 'postgres',
+    password: process.env.POSTGRES_PASSWORD,
+    port: process.env.POSTGRES_PORT
+  });
+
+  try {
+    await adminClient.query(`CREATE DATABASE "${process.env.POSTGRES_DB}"`);
+    console.log(`Banco ${process.env.POSTGRES_DB} criado!`);
+  } catch (err) {
+    if (err.code === '42P04') {
+      console.log(`Banco ${process.env.POSTGRES_DB} já existe`);
+    } else {
+      console.error('Erro ao criar banco:', err);
+      throw err;
+    }
+  } finally {
+    await adminClient.end();
+  }
+
+  // Cria a conexão principal
+  db = new Pool({
+    host: process.env.POSTGRES_HOST,
+    user: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
+    database: process.env.POSTGRES_DB,
+    port: process.env.POSTGRES_PORT
+  });
+
+  // Cria a tabela
+  await db.query(`
     CREATE TABLE IF NOT EXISTS users (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      id SERIAL PRIMARY KEY,
       name VARCHAR(255),
       email VARCHAR(255)
     )`);
-});
+  console.log('Tabela users verificada/criada!');
+};
 
+// Configuração do Swagger
 const swaggerOptions = {
   swaggerDefinition: {
     openapi: '3.0.0',
     info: {
       title: 'User API',
       version: '1.0.0',
-      description: 'CRUD de usuários com MySQL'
+      description: 'CRUD de usuários com PostgreSQL'
     }
   },
   apis: ['server.js']
@@ -54,7 +84,7 @@ app.use('/swagger', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.get('/users', (req, res) => {
   db.query('SELECT * FROM users', (err, results) => {
     if (err) return res.status(500).send(err);
-    res.json(results);
+    res.json(results.rows);
   });
 });
 
@@ -81,10 +111,14 @@ app.get('/users', (req, res) => {
  */
 app.post('/users', (req, res) => {
   const { name, email } = req.body;
-  db.query('INSERT INTO users (name, email) VALUES (?, ?)', [name, email], (err, result) => {
-    if (err) return res.status(500).send(err);
-    res.status(201).json({ id: result.insertId, name, email });
-  });
+  db.query(
+    'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *', 
+    [name, email], 
+    (err, result) => {
+      if (err) return res.status(500).send(err);
+      res.status(201).json(result.rows[0]);
+    }
+  );
 });
 
 /**
@@ -115,10 +149,14 @@ app.post('/users', (req, res) => {
  */
 app.put('/users/:id', (req, res) => {
   const { name, email } = req.body;
-  db.query('UPDATE users SET name = ?, email = ? WHERE id = ?', [name, email, req.params.id], (err) => {
-    if (err) return res.status(500).send(err);
-    res.json({ id: req.params.id, name, email });
-  });
+  db.query(
+    'UPDATE users SET name = $1, email = $2 WHERE id = $3', 
+    [name, email, req.params.id], 
+    (err) => {
+      if (err) return res.status(500).send(err);
+      res.json({ id: req.params.id, name, email });
+    }
+  );
 });
 
 /**
@@ -137,13 +175,28 @@ app.put('/users/:id', (req, res) => {
  *         description: Usuário removido
  */
 app.delete('/users/:id', (req, res) => {
-  db.query('DELETE FROM users WHERE id = ?', [req.params.id], (err) => {
-    if (err) return res.status(500).send(err);
-    res.status(204).send();
-  });
+  db.query(
+    'DELETE FROM users WHERE id = $1', 
+    [req.params.id], 
+    (err) => {
+      if (err) return res.status(500).send(err);
+      res.status(204).send();
+    }
+  );
 });
 
-app.listen(port, () => {
-  console.log(`Servidor rodando em http://localhost:${port}`);
-  console.log(`Swagger em http://localhost:${port}/swagger`);
-});
+// Inicialização do servidor
+const startServer = async () => {
+  try {
+    await initializeDatabase();
+    app.listen(port, () => {
+      console.log(`Servidor rodando em http://localhost:${port}`);
+      console.log(`Swagger em http://localhost:${port}/swagger`);
+    });
+  } catch (err) {
+    console.error('Falha na inicialização:', err);
+    process.exit(1);
+  }
+};
+
+startServer();
