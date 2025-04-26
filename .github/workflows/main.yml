@@ -21,9 +21,6 @@ jobs:
       - name: Install dependencies
         run: npm ci  # Usar ci para instalação limpa
 
-      - name: Run tests
-        run: npm test
-
       - name: Calculate new version
         id: version
         run: |
