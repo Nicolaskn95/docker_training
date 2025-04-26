@@ -50,8 +50,8 @@ const initializeDatabase = async () => {
   await db.query(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
-      name VARCHAR(255),
-      email VARCHAR(255)
+      name VARCHAR(100),
+      email VARCHAR(100)
     )`);
   console.log('Tabela users verificada/criada!');
 };
