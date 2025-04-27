@@ -17,7 +17,7 @@ docker run --name cont-postgresql \
   -d postgres
 ```
 
-- API
+### API
 
 ## 📦 Construir a Imagem Docker API
 
