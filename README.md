@@ -1,12 +1,31 @@
 # Docker - Construção e Execução de Container para API + PostgreSQL
 
-## 📦 Passo 1: Construir a Imagem Docker
+## 🐘 Banco de Dados PostgreSQL
+
+### Construir a imagem do PostgreSQL
+  Observação: O ponto (.) no final do comando é essencial, pois indica que o Dockerfile está no diretório atual.
+```bash
+docker build -t postgres .
+```
+
+### Executar o container com relacionando a imagem do postgres
+
+```bash
+docker run --name cont-postgresql \
+  -e POSTGRES_PASSWORD=DSM@123 \
+  -p 5432:5432 \
+  -d postgres
+```
+
+- API
+
+## 📦 Construir a Imagem Docker API
 
 ```bash
 docker build -t img-api .
 ```
 
-## 🚀 Passo 2: Executar o Container da API
+## 🚀 Executar o Container da API e colocar as variaveis
 
 ```bash
 docker run --name cont-api \
@@ -19,7 +38,7 @@ docker run --name cont-api \
   -d img-api
 ```
 
-## 🔍 Passo 3: Verificar o Banco de Dados
+## 🔍 Verificar o Banco de Dados
 Para verificar as tabelas no PostgreSQL:
 
 ```bash
