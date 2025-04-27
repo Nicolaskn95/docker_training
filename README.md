@@ -2,12 +2,6 @@
 
 ## 🐘 Banco de Dados PostgreSQL
 
-### Construir a imagem do PostgreSQL
-  Observação: O ponto (.) no final do comando é essencial, pois indica que o Dockerfile está no diretório atual.
-```bash
-docker build -t postgres .
-```
-
 ### Executar o container com relacionando a imagem do postgres
 
 ```bash
