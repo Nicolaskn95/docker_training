@@ -184,8 +184,8 @@ const startServer = async () => {
   try {
     await initializeDatabase();
     app.listen(port, () => {
-      console.log(`Servidor rodando em http://localhost:${port}`);
-      console.log(`Swagger em http://localhost:${port}/swagger`);
+      console.log(`Servidor rodando em http://localhost:5200`);
+      console.log(`Swagger em http://localhost:5200/swagger`);
     });
   } catch (err) {
     console.error('Falha na inicialização:', err);
