@@ -47,7 +47,8 @@ const initializeDatabase = async () => {
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
       name VARCHAR(100),
-      email VARCHAR(100)
+      email VARCHAR(100),
+      phone VARCHAR(100)
     )`);
   console.log('Tabela users verificada/criada!');
 };
@@ -94,21 +95,23 @@ app.get('/users', (req, res) => {
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, email]
+ *             required: [name, email, phone]
  *             properties:
  *               name:
  *                 type: string
  *               email:
+ *                 type: string
+ *               phone:
  *                 type: string
  *     responses:
  *       201:
  *         description: Usuário criado
  */
 app.post('/users', (req, res) => {
-  const { name, email } = req.body;
+  const { name, email, phone } = req.body;
   db.query(
-    'INSERT INTO users (name, email) VALUES ($1, $2) RETURNING *', 
-    [name, email], 
+    'INSERT INTO users (name, email, phone) VALUES ($1, $2, $3) RETURNING *', 
+    [name, email, phone], 
     (err, result) => {
       if (err) return res.status(500).send(err);
       res.status(201).json(result.rows[0]);
@@ -138,18 +141,20 @@ app.post('/users', (req, res) => {
  *                 type: string
  *               email:
  *                 type: string
+ *               phone:
+ *                 type: string
  *     responses:
  *       200:
  *         description: Usuário atualizado
  */
 app.put('/users/:id', (req, res) => {
-  const { name, email } = req.body;
+  const { name, email, phone } = req.body;
   db.query(
-    'UPDATE users SET name = $1, email = $2 WHERE id = $3', 
-    [name, email, req.params.id], 
+    'UPDATE users SET name = $1, email = $2, phone = $3 WHERE id = $3', 
+    [name, email, phone, req.params.id], 
     (err) => {
       if (err) return res.status(500).send(err);
-      res.json({ id: req.params.id, name, email });
+      res.json({ id: req.params.id, name, email, phone });
     }
   );
 });
